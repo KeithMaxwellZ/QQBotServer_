@@ -28,7 +28,7 @@ def process(raw_data: dict):
     if not proc[0][0:2] == '--':
         return
     if notification(command):
-        s = '出完刀后不要把伤害忘记录入到bot里，命令 --addactual [boss序号] [第几刀（队伍序号）] [伤害]'
+        s = '出完刀后不要把伤害忘记录入到bot里，命令 --addactual boss序号 第几刀（队伍序号） 伤害'
         send_group_message(raw_data['group_id'], s)
         return
     else:
