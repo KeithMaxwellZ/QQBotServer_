@@ -79,7 +79,7 @@ def process(raw_data: dict):
                 user_name = proc[2]
                 user_id = proc[3]
             else:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 --u [玩家名] [玩家id]')
+                send_group_message(raw_data['group_id'], '参数错误，正确格式为 --u 玩家名 玩家id')
                 return
             if update_user(target, user_name, user_id):
                 send_group_message(raw_data['group_id'], '更新完成')
@@ -106,7 +106,7 @@ def process(raw_data: dict):
                 damage = proc[4]
                 mode = 'trial'
             else:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addtrial [boss序号] [第几刀（队伍序号）] [伤害]')
+                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addtrial boss序号 第几刀（队伍序号） 伤害')
                 return
             try:
                 input_data(target, phase, boss_id, team_id, damage, mode)
@@ -130,7 +130,7 @@ def process(raw_data: dict):
                 damage = proc[4]
                 mode = 'actual'
             else:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addtrial [boss序号] [第几刀（队伍序号）] [伤害]')
+                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addtrial boss序号 第几刀（队伍序号） 伤害')
                 return
             try:
                 input_data(target, phase, boss_id, team_id, damage, mode)
@@ -149,7 +149,7 @@ def process(raw_data: dict):
             return
         elif proc[0] == '--addboss':  # --addboss [phase] [boss_id] [health]
             if not len(proc) == 3:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addboss [阶段] [boss序号]')
+                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addboss 阶段 boss序号')
                 return
             phase = proc[1]
             boss_id = proc[2]
@@ -162,7 +162,7 @@ def process(raw_data: dict):
             return
         elif proc[0] == '--removeboss':  # --removeboss [phase] [boss_id]
             if not len(proc) == 3:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -removeboss [阶段] [boss序号]')
+                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -removeboss 阶段 boss序号')
             phase = proc[1]
             boss_id = proc[2]
             try:
@@ -178,7 +178,7 @@ def process(raw_data: dict):
                 set_day(proc[1])
                 send_group_message(raw_data['group_id'], '日期已变更')
             else:
-                send_group_message(raw_data['group_id'], '参数数量错误，应为--setday [日期]')
+                send_group_message(raw_data['group_id'], '参数数量错误，应为--setday 日期')
         elif proc[0] == '--setmod':
             if raw_data['sender']['user_id'] in modList:
                 set_mod(proc[1])
