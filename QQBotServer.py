@@ -23,24 +23,31 @@ def notification(msg: str) -> bool:
 
 
 def process(raw_data: dict):
+
+    command_list = {'register': '--登记信息 玩家名 玩家id',
+                    'update': '--更新信息 玩家名 玩家id',
+                    'display': '--显示模拟战伤害',
+                    'add_actual': '--添加实战数据 boss序号 第几刀(队伍序号) 伤害',
+                    'add_trial': '--添加模拟战数据 boss序号 第几刀(队伍序号) 伤害'}
+
     command = raw_data['raw_message']
     proc = str.split(command, ' ')
     if not proc[0][0:2] == '--':
         return
     if notification(command):
-        s = '出完刀后不要把伤害忘记录入到bot里，命令 --addactual boss序号 第几刀（队伍序号） 伤害'
+        s = '出完刀后不要把伤害忘记录入到bot里，命令 --添加实战数据 boss序号 第几刀（队伍序号） 伤害'
         send_group_message(raw_data['group_id'], s)
         return
     else:
-        if proc[0] == '--h':
+        if proc[0] == '--h' or proc[0] == '--帮助':
             s = "现有命令：\n" \
-                "--addtrial boss序号 第几刀(队伍序号) 伤害  " \
+                f"{command_list['add_trial']}  " \
                 "（输入伤害 举例：--addtrial 1 1 1000 则会为一王输入伤害为1000的第一刀模拟）\n" \
-                "--addactual boss序号 第几刀(队伍序号) 伤害  " \
+                f"{command_list['add_actual']}  " \
                 "（输入伤害 举例：--addactual 2 3 1000 则会为二王输入伤害为1000的第三刀实际伤害）\n" \
-                "--d （查看自己当前的伤害）\n" \
-                "--r 玩家名 玩家id  （登记用户信息，游戏内id可在主菜单页面中的简介页看到，请不要带空格）\n" \
-                "--u 玩家名 玩家id  （更新用户信息）\n" \
+                f"{command_list['display']} （查看自己当前的伤害）\n" \
+                f"{command_list['register']}  （登记用户信息，游戏内id可在主菜单页面中的简介页看到，请不要带空格）\n" \
+                f"{command_list['update']}  （更新用户信息）\n" \
                 "详细的出刀/伤害信息可以在 http://fredric-mix.com/ 查询\n" \
             # "--queue [qq] [boss序号] [第几刀（队伍序号）] （加入出刀队列）\n" \
             # "--finish [第几刀（队伍序号）] [伤害] （完成出刀）\n" \
@@ -50,7 +57,7 @@ def process(raw_data: dict):
         if proc[0] == '--test':
             send_group_message(raw_data['group_id'], 'success')
             return
-        elif proc[0] == '--r':  # --r [user_name] [user_id] [guild]
+        elif proc[0] == '--r' or proc[0] == '--登记信息':  # --r [user_name] [user_id] [guild]
             if len(proc) == 4:
                 target = raw_data['sender']['user_id']
                 user_name = proc[1]
@@ -62,14 +69,14 @@ def process(raw_data: dict):
                 user_id = proc[3]
                 guild = proc[4]
             else:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 --r [玩家名] [玩家id]')
+                send_group_message(raw_data['group_id'], f"参数错误，正确格式为 {command_list['register']}")
                 return
             if register_user(target, user_name, user_id, guild):
                 send_group_message(raw_data['group_id'], '登记完成')
             else:
-                send_group_message(raw_data['group_id'], '已存在，请使用--u更新')
+                send_group_message(raw_data['group_id'], f"已存在，请使用 {command_list['update']} 进行更新")
             return
-        elif proc[0] == '--u':  # --u [user_name] [user_id]
+        elif proc[0] == '--u' or proc[0] == '--更新信息':  # --u [user_name] [user_id]
             if len(proc) == 3:
                 target = raw_data['sender']['user_id']
                 user_name = proc[1]
@@ -79,34 +86,36 @@ def process(raw_data: dict):
                 user_name = proc[2]
                 user_id = proc[3]
             else:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 --u 玩家名 玩家id')
+                send_group_message(raw_data['group_id'], f"参数错误，正确格式为 {command_list['update']} 玩家名 玩家id")
                 return
             if update_user(target, user_name, user_id):
                 send_group_message(raw_data['group_id'], '更新完成')
             else:
-                send_group_message(raw_data['group_id'], '信息不存在，请使用--r登记')
+                send_group_message(raw_data['group_id'], f"信息不存在，请使用 {command_list['register']} 登记")
             return
 
         if not check_member_exist(raw_data['sender']['user_id']):
-            send_group_message(raw_data['group_id'], '请先使用--r登记信息, 输入--h查看命令详情')
+            send_group_message(raw_data['group_id'],
+                               f"请先使用 {command_list['register']} 进行登记, 输入 --帮助 查看命令详情")
             return
-        if proc[0] == '--addtrial':  # --addtrial ([phase]) [boss_id] [team_id] [damage]
+        if proc[0] == '--addtrial' or proc[0] == '--添加模拟战数据':  # --addtrial [phase] [boss_id] [team_id] [damage]
             if len(proc) == 4:
                 target = raw_data['sender']['user_id']
-                phase = '1'
-                boss_id = proc[1]
-                team_id = proc[2]
-                damage = proc[3]
-                mode = 'trial'
-            elif len(proc) == 5:
-                target = find_qq(proc[1])
-                phase = '1'
+                phase = proc[1]
                 boss_id = proc[2]
                 team_id = proc[3]
                 damage = proc[4]
                 mode = 'trial'
+            elif len(proc) == 5:
+                target = find_qq(proc[1])
+                phase = proc[2]
+                boss_id = proc[3]
+                team_id = proc[4]
+                damage = proc[5]
+                mode = 'trial'
             else:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addtrial boss序号 第几刀（队伍序号） 伤害')
+                send_group_message(raw_data['group_id'],
+                                   f"参数错误，正确格式为 {command_list['add_trial']} 伤害")
                 return
             try:
                 input_data(target, phase, boss_id, team_id, damage, mode)
@@ -114,23 +123,23 @@ def process(raw_data: dict):
             except DataProcessError as dpe:
                 send_group_message(raw_data['group_id'], dpe.msg)
             return
-        if proc[0] == '--addactual':  # --addactual ([phase]) [boss_id] [team_id] [damage]
+        if proc[0] == '--addactual' or proc[0] == '--添加实战数据':  # --addactual [phase] [boss_id] [team_id] [damage]
             if len(proc) == 4:
                 target = raw_data['sender']['user_id']
-                phase = '1'
-                boss_id = proc[1]
-                team_id = proc[2]
-                damage = proc[3]
-                mode = 'actual'
-            elif len(proc) == 5:
-                target = find_qq(proc[1])
-                phase = '1'
+                phase = proc[1]
                 boss_id = proc[2]
                 team_id = proc[3]
                 damage = proc[4]
                 mode = 'actual'
+            elif len(proc) == 5:
+                target = find_qq(proc[1])
+                phase = proc[2]
+                boss_id = proc[3]
+                team_id = proc[4]
+                damage = proc[5]
+                mode = 'actual'
             else:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addtrial boss序号 第几刀（队伍序号） 伤害')
+                send_group_message(raw_data['group_id'], f"参数错误，正确格式为 {command_list['add_actual']} 伤害")
                 return
             try:
                 input_data(target, phase, boss_id, team_id, damage, mode)
@@ -138,7 +147,7 @@ def process(raw_data: dict):
             except DataProcessError as dpe:
                 send_group_message(raw_data['group_id'], dpe.msg)
             return
-        elif proc[0] == '--d':
+        elif proc[0] == '--d' or proc[0] == '--显示模拟战伤害':
             if len(proc) == 1:
                 st = display_damage(raw_data['sender']['user_id'])
             elif len(proc) == 2:
@@ -253,14 +262,3 @@ if __name__ == '__main__':
     with open('config.json', 'r') as f:
         temp_d = json.load(f)
     svr.run(host=temp_d['server_address'], port=9961)
-
-#
-# docker run -ti --rm --name cqhttp-test \
-# 	     -v /usr/share/qcool/test:/home/user/coolq \
-#              -p 9000:9000 \
-#              -p 5700:5700 \
-#              -e COOLQ_ACCOUNT=2797339190 \
-#              -e CQHTTP_POST_URL=http://host.docker.internal:9961/  \
-#              -e CQHTTP_SERVE_DATA_FILES=yes \
-# 	     -e VNC_PASSWD=20001115 \
-# 	     richardchien/cqhttp:latest
