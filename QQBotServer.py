@@ -41,9 +41,9 @@ def process(raw_data: dict):
     else:
         if proc[0] == '--h' or proc[0] == '--帮助':
             s = "现有命令：\n" \
-                f"{command_list['add_trial']}  " \
+                f"{command_list['add_trial']}  \n" \
                 "（输入伤害 举例：--addtrial 1 1 1000 则会为一王输入伤害为1000的第一刀模拟）\n" \
-                f"{command_list['add_actual']}  " \
+                f"{command_list['add_actual']}  \n" \
                 "（输入伤害 举例：--addactual 2 3 1000 则会为二王输入伤害为1000的第三刀实际伤害）\n" \
                 f"{command_list['display']} （查看自己当前的伤害）\n" \
                 f"{command_list['register']}  （登记用户信息，游戏内id可在主菜单页面中的简介页看到，请不要带空格）\n" \
