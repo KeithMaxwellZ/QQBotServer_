@@ -7,7 +7,7 @@ import json
 
 from data_process_db import *
 from data_fetching_db import *
-from util_functions import send_group_message, send_private_message, find_qq
+from util_functions import send_group_message, send_private_message, find_qq, check_mod
 
 svr = Flask(__name__)
 svr.config['JSON_AS_ASCII'] = False
@@ -27,8 +27,8 @@ def process(raw_data: dict):
     command_list = {'register': '--登记信息 玩家名 玩家id',
                     'update': '--更新信息 玩家名 玩家id',
                     'display': '--显示模拟战伤害',
-                    'add_actual': '--添加实战数据 boss序号 第几刀(队伍序号) 伤害',
-                    'add_trial': '--添加模拟战数据 boss序号 第几刀(队伍序号) 伤害'}
+                    'add_actual': '--添加实战数据 周目 boss序号 第几刀(队伍序号) 伤害',
+                    'add_trial': '--添加模拟战数据 周目 boss序号 第几刀(队伍序号) 伤害'}
 
     command = raw_data['raw_message']
     proc = str.split(command, ' ')
@@ -42,9 +42,9 @@ def process(raw_data: dict):
         if proc[0] == '--h' or proc[0] == '--帮助':
             s = "现有命令：\n" \
                 f"{command_list['add_trial']}  \n" \
-                "（输入伤害 举例：--addtrial 1 1 1000 则会为一王输入伤害为1000的第一刀模拟）\n" \
+                "（输入伤害 举例：--addtrial 2 1 1 1000 则会为二周目一王输入伤害为1000的第一刀模拟）\n" \
                 f"{command_list['add_actual']}  \n" \
-                "（输入伤害 举例：--addactual 2 3 1000 则会为二王输入伤害为1000的第三刀实际伤害）\n" \
+                "（输入伤害 举例：--addactual 1 2 3 1000 则会为一周目二王输入伤害为1000的第三刀实际伤害）\n" \
                 f"{command_list['display']} （查看自己当前的伤害）\n" \
                 f"{command_list['register']}  （登记用户信息，游戏内id可在主菜单页面中的简介页看到，请不要带空格）\n" \
                 f"{command_list['update']}  （更新用户信息）\n" \
@@ -99,14 +99,14 @@ def process(raw_data: dict):
                                f"请先使用 {command_list['register']} 进行登记, 输入 --帮助 查看命令详情")
             return
         if proc[0] == '--addtrial' or proc[0] == '--添加模拟战数据':  # --addtrial [phase] [boss_id] [team_id] [damage]
-            if len(proc) == 4:
+            if len(proc) == 5:
                 target = raw_data['sender']['user_id']
                 phase = proc[1]
                 boss_id = proc[2]
                 team_id = proc[3]
                 damage = proc[4]
                 mode = 'trial'
-            elif len(proc) == 5:
+            elif len(proc) == 6:
                 target = find_qq(proc[1])
                 phase = proc[2]
                 boss_id = proc[3]
@@ -124,14 +124,14 @@ def process(raw_data: dict):
                 send_group_message(raw_data['group_id'], dpe.msg)
             return
         if proc[0] == '--addactual' or proc[0] == '--添加实战数据':  # --addactual [phase] [boss_id] [team_id] [damage]
-            if len(proc) == 4:
+            if len(proc) == 5:
                 target = raw_data['sender']['user_id']
                 phase = proc[1]
                 boss_id = proc[2]
                 team_id = proc[3]
                 damage = proc[4]
                 mode = 'actual'
-            elif len(proc) == 5:
+            elif len(proc) == 6:
                 target = find_qq(proc[1])
                 phase = proc[2]
                 boss_id = proc[3]
@@ -180,18 +180,34 @@ def process(raw_data: dict):
             except DataProcessError as dpe:
                 send_group_message(raw_data['group_id'], dpe.msg)
             return
-        elif proc[0] == '--setday':
-            if not raw_data['sender']['user_id'] in modList:
-                return
-            if len(proc) == 2:
-                set_day(proc[1])
-                send_group_message(raw_data['group_id'], '日期已变更')
-            else:
-                send_group_message(raw_data['group_id'], '参数数量错误，应为--setday 日期')
-        elif proc[0] == '--setmod':
-            if raw_data['sender']['user_id'] in modList:
-                set_mod(proc[1])
-                send_group_message(raw_data['group_id'], '已设置管理权限')
+        elif check_mod(raw_data['sender']['user_id']):
+            if proc[0] == '--setday':
+                if not raw_data['sender']['user_id'] in modList:
+                    return
+                if len(proc) == 2:
+                    set_day(proc[1])
+                    send_group_message(raw_data['group_id'], '日期已变更')
+                else:
+                    send_group_message(raw_data['group_id'], '参数数量错误，应为--setday 日期')
+            elif proc[0] == '--setphase':
+                if not raw_data['sender']['user_id'] in modList:
+                    return
+                if len(proc) == 3:
+                    if proc[1] == 1:
+                        t = '一会'
+                    elif proc[1] == 3:
+                        t = '三会'
+                    else:
+                        send_group_message(raw_data['group_id'], '参数数量错误，应为--phase 公会 周目')
+                        return
+                    set_phase(t, proc[1])
+                    send_group_message(raw_data['group_id'], '日期已变更')
+                else:
+                    send_group_message(raw_data['group_id'], '参数数量错误，应为--phase 公会 周目')
+            elif proc[0] == '--setmod':
+                if raw_data['sender']['user_id'] in modList:
+                    set_mod(proc[1])
+                    send_group_message(raw_data['group_id'], '已设置管理权限')
         # elif proc[0] == '--queue':
         #     add_to_queue(data, proc)
         #     return
@@ -230,24 +246,22 @@ def message_received():
 
 @svr.route('/request_info', methods=['POST'])
 def get_info():
-    print("received")
     if request.method == 'POST':
         a = request.get_data()
         dict1 = json.loads(a)
-
         req = dict1['request']
+        guild = dict1['guild']
         if req == 'boss':
             boss_id = dict1['boss_id']
             mode = dict1['mode']
             arg = dict1['arg']
             try:
-                res = fetch_boss(boss_id, mode, arg)
+                res = fetch_boss(boss_id, mode, arg, guild)
             except InternalError:
                 res = {}
         elif req == 'member_list':
-            res = fetch_member()
+            res = fetch_member(guild)
 
-        print(res)
         response = make_response(jsonify(json.dumps(res)))
         response.headers['Access-Control-Allow-Origin'] = '*'
         response.headers['Access-Control-Allow-Methods'] = 'POST'

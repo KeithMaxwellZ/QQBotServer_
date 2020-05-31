@@ -243,6 +243,18 @@ def set_day(val: str):
     return
 
 
+def set_phase(guild: str, val: str):
+    # convert type
+    try:
+        val = int(val)
+    except ValueError:
+        raise DataProcessError('格式错误，请确保参数是数字')
+    command = f"UPDATE config SET value={val} WHERE key_name='{guild}_phase'"
+    cursor.execute(command)
+    connection.commit()
+    return
+
+
 def set_mod(target: str):
     try:
         target = int(target)
@@ -258,7 +270,6 @@ def set_mod(target: str):
         raise DataProcessError('成员不存在')
 
 
-global cursor, connection
 cursor, connection = connect_database()
 # connection, cursor = connect_database()
 # command = 'desc actual_damage_d1'

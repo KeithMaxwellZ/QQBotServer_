@@ -17,6 +17,13 @@ def connect_database():
     return cursor, connection
 
 
+def check_mod(target: int) -> bool:
+    command = f"SELECT roll FROM pcr.member_list WHERE qq={target}"
+    cursor.execute(command)
+    res = cursor.fetchall()
+    return res[0][0] == 'mod'
+
+
 def find_qq(raw: str) -> str:
     if raw.isdigit():
         return int(raw)
@@ -49,4 +56,4 @@ def send_group_message(group_id: int, message: str):
     return r
 
 
-connect_database()
+cursor, connection = connect_database()
