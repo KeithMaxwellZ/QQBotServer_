@@ -239,6 +239,8 @@ def set_day(val: str):
         raise DataProcessError('格式错误，请确保参数是数字')
     command = "UPDATE config SET value=%d WHERE key_name='day'" % val
     cursor.execute(command)
+    command = f"CREATE TABLE pcr.actual_damage_d{val} (qq INT UNIQUE)"
+    cursor.execute(command)
     connection.commit()
     return
 

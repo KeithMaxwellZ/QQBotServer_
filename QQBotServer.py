@@ -272,7 +272,7 @@ def get_info():
 
 if __name__ == '__main__':
     modList = [2034845390, 1208354709]
-    groupList = [966252547, 852735288]
+    groupList = [966252547, 852735288, 1107794448, 851613122]
     with open('config.json', 'r') as f:
         temp_d = json.load(f)
     svr.run(host=temp_d['server_address'], port=9961)
