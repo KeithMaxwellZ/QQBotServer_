@@ -3,5 +3,6 @@
   "database_address": "127.0.0.1",
   "database_port": 1024,
   "user": "testUser1",
-  "password": "123"
+  "password": "123",
+  "develop": true
 }
