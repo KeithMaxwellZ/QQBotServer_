@@ -105,4 +105,3 @@ def draw_one(char_list: list):
 
 
 cursor, connection = connect_database()
-
