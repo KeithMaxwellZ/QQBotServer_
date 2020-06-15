@@ -7,7 +7,7 @@ import json
 
 from data_process_db import *
 from data_fetching_db import *
-from util_functions import send_group_message, send_private_message, find_qq, check_mod
+from util_functions import send_group_message, send_private_message, find_qq, check_mod,lottery
 
 svr = Flask(__name__)
 svr.config['JSON_AS_ASCII'] = False
@@ -23,7 +23,9 @@ def notification(msg: str) -> bool:
 
 
 def process(raw_data: dict):
-    command_list = {'register': '--登记信息 玩家名 玩家id',
+    command_list = {'lottery_ten': '--十连',
+                    'lottery_one': '--单抽',
+                    'register': '--登记信息 玩家名 玩家id',
                     'update': '--更新信息 玩家名 玩家id',
                     'display': '--显示模拟战伤害',
                     'add_actual': '--添加实战数据 周目 boss序号 第几刀(队伍序号) 伤害',
@@ -40,6 +42,8 @@ def process(raw_data: dict):
     else:
         if proc[0] == '--h' or proc[0] == '--帮助':
             s = "现有命令：\n" \
+                f"{command_list['lottery_ten']}  (十连，概率为白金池概率，有保底)\n"\
+                f"{command_list['lottery_one']}  （单抽，也是白金池概率）\n" \
                 f"{command_list['add_trial']}  \n" \
                 "（输入伤害 举例：--添加模拟战数据 2 1 1 1000 则会为二周目一王输入伤害为1000的第一刀模拟）\n" \
                 f"{command_list['add_actual']}  \n" \
@@ -53,10 +57,16 @@ def process(raw_data: dict):
             # "--la （显示排刀队列） \n"
             send_group_message(raw_data['group_id'], s)
             return
-        if proc[0] == '--test':
+        elif proc[0] == '--test':
             send_group_message(raw_data['group_id'], 'success')
             return
-        if temp_d['debug']:
+        elif proc[0] == '--十连':
+            send_group_message(raw_data['group_id'], lottery('ten'))
+            return
+        elif proc[0] == '--单抽':
+            send_group_message(raw_data['group_id'], lottery('single'))
+            return
+        if temp_d['develop']:
             send_group_message(raw_data['group_id'], '功能维护中')
             return
         elif proc[0] == '--r' or proc[0] == '--登记信息':  # --r [user_name] [user_id] [guild]

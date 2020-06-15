@@ -1,6 +1,7 @@
 import requests
 import pymysql
 import json
+import random
 
 
 # Connect to the database
@@ -71,6 +72,37 @@ def generate_char_list_file():
         json.dump(res, f)
     return
 
-cursor, connection = connect_database()
 
+def lottery(mode: str) -> str:
+    res: list
+    with open('character_list.json', 'r') as f:
+        char_list = json.load(f)
+    if mode == "single":
+        return draw_one(char_list)
+    elif mode == "ten":
+        res = "以下为稻叶二号机预测的十连结果\n"
+        hasSR = False
+        for i in range(0, 9):
+            r = draw_one(char_list)
+            res += r[0]
+            if r[1] == 2:
+                hasSR = True
+        if not hasSR:
+            res += f'★★☆-{char_list["SR"][random.randrange(0, len(char_list["SR"]))]}\n'
+        else:
+            res += draw_one(char_list)[0]
+        return res
+
+
+def draw_one(char_list: list):
+    prob = random.randrange(1, 10000)
+    if prob < 250:
+        return [f'★★★-{char_list["SSR"][random.randrange(0, len(char_list["SSR"]))]}\n', 3]
+    elif prob < 2050:
+        return [f'★★☆-{char_list["SR"][random.randrange(0, len(char_list["SR"]))]}\n', 2]
+    else:
+        return [f'★☆☆-{char_list["R"][random.randrange(0, len(char_list["R"]))]}\n', 1]
+
+
+cursor, connection = connect_database()
 
