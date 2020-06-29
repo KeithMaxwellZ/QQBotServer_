@@ -63,7 +63,7 @@ def fetch_member(guild: str) -> dict:
     command = "SELECT * FROM pcr.config WHERE key_name='day'"
     cursor.execute(command)
     day = cursor.fetchall()[0][1]
-    database_name = f"actual_damage_d{day}"
+    col_list = [f"d{day}t1", f"d{day}t2", f"d{day}t3"]
     command = f'SELECT qq,user_name,guild FROM member_list'
     cursor.execute(command)
     temp_list = cursor.fetchall()
@@ -74,15 +74,18 @@ def fetch_member(guild: str) -> dict:
             all_data.append(i)
     t = []
     for i in all_data:
-        command = f'SELECT * FROM {database_name} WHERE qq={i[0]}'
+        command = f'SELECT {col_list[0]},{col_list[1]},{col_list[2]} FROM pcr.actual_damage WHERE qq={i[0]}'
         cursor.execute(command)
         damage_list = cursor.fetchall()
-        count = -1
+        count = 0
+
         if len(damage_list) == 0:
-            count = 0
+            pass
         else:
-            for j in damage_list[0]:
-                if j > 0:
+            for x in damage_list[0]:
+                if x == '':
+                    pass
+                else:
                     count += 1
         t.append([i[0], i[1], count])
     t = sorted(t, key=lambda k: k[2], reverse=False)
@@ -95,4 +98,3 @@ def fetch_member(guild: str) -> dict:
 
 
 cursor, connection = connect_database()
-

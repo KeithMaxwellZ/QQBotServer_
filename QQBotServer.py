@@ -3,11 +3,9 @@ import flask_cors
 
 from pymysql.err import InternalError
 
-import json
-
-from data_process_db import *
+from data_processing_db import *
 from data_fetching_db import *
-from util_functions import send_group_message, send_private_message, find_qq, check_mod,lottery
+from util_functions import send_group_message, send_private_message, find_qq, check_mod, lottery
 
 svr = Flask(__name__)
 svr.config['JSON_AS_ASCII'] = False
@@ -28,30 +26,32 @@ def process(raw_data: dict):
                     'register': '--登记信息 玩家名 玩家id',
                     'update': '--更新信息 玩家名 玩家id',
                     'display': '--显示模拟战伤害',
-                    'add_actual': '--添加实战数据 周目 boss序号 第几刀(队伍序号) 伤害',
+                    'add_actual': '--出刀 伤害',
+                    'last': '--尾刀',
                     'add_trial': '--添加模拟战数据 周目 boss序号 第几刀(队伍序号) 伤害'}
 
     command = raw_data['raw_message']
     proc = str.split(command, ' ')
     if not proc[0][0:2] == '--':
         return
-    if notification(command):
-        s = '出完刀后不要把伤害忘记录入到bot里，命令 --添加实战数据 boss序号 第几刀（队伍序号） 伤害'
-        send_group_message(raw_data['group_id'], s)
-        return
+    # if notification(command):
+    #     s = '出完刀后不要把伤害忘记录入到bot里，命令 --添加实战数据 boss序号 第几刀（队伍序号） 伤害'
+    #     send_group_message(raw_data['group_id'], s)
+    #     return
     else:
         if proc[0] == '--h' or proc[0] == '--帮助':
             s = "现有命令：\n" \
-                f"{command_list['lottery_ten']}  (十连，概率为白金池概率，有保底)\n"\
+                f"{command_list['lottery_ten']}  (十连，概率为白金池概率，有保底)\n" \
                 f"{command_list['lottery_one']}  （单抽，也是白金池概率）\n" \
                 f"{command_list['add_trial']}  \n" \
                 "（输入伤害 举例：--添加模拟战数据 2 1 1 1000 则会为二周目一王输入伤害为1000的第一刀模拟）\n" \
                 f"{command_list['add_actual']}  \n" \
-                "（输入伤害 举例：--添加实战数据 1 2 3 1000 则会为一周目二王输入伤害为1000的第三刀实际伤害）\n" \
-                f"{command_list['display']} （查看自己当前的伤害）\n" \
+                "（输入伤害 举例：--出刀 100000 则会记录100000伤害的一刀）\n" \
+                f"{command_list['last']} \n" \
+                f"(输入尾刀，伤害会自动记录为boss当前剩余血量)\n" \
                 f"{command_list['register']}  （登记用户信息，游戏内id可在主菜单页面中的简介页看到，请不要带空格）\n" \
                 f"{command_list['update']}  （更新用户信息）\n" \
-                "详细的出刀/伤害信息可以在 http://fredric-mix.com/ 查询\n" \
+                "详细的出刀/伤害信息可以在 http://fredric-mix.com/ 查询\n"
             # "--queue [qq] [boss序号] [第几刀（队伍序号）] （加入出刀队列）\n" \
             # "--finish [第几刀（队伍序号）] [伤害] （完成出刀）\n" \
             # "--la （显示排刀队列） \n"
@@ -110,6 +110,7 @@ def process(raw_data: dict):
             send_group_message(raw_data['group_id'],
                                f"请先使用 {command_list['register']} 进行登记, 输入 --帮助 查看命令详情")
             return
+
         if proc[0] == '--addtrial' or proc[0] == '--添加模拟战数据':  # --addtrial [phase] [boss_id] [team_id] [damage]
             if len(proc) == 5:
                 target = raw_data['sender']['user_id']
@@ -117,44 +118,44 @@ def process(raw_data: dict):
                 boss_id = proc[2]
                 team_id = proc[3]
                 damage = proc[4]
-                mode = 'trial'
             elif len(proc) == 6:
                 target = find_qq(proc[1])
                 phase = proc[2]
                 boss_id = proc[3]
                 team_id = proc[4]
                 damage = proc[5]
-                mode = 'trial'
             else:
                 send_group_message(raw_data['group_id'],
                                    f"参数错误，正确格式为 {command_list['add_trial']} 伤害")
                 return
             try:
-                input_data(target, phase, boss_id, team_id, damage, mode)
+                add_trial_damage(target, phase, boss_id, team_id, damage)
                 send_group_message(raw_data['group_id'], '已录入')
             except DataProcessError as dpe:
                 send_group_message(raw_data['group_id'], dpe.msg)
             return
-        if proc[0] == '--addactual' or proc[0] == '--添加实战数据':  # --addactual [phase] [boss_id] [team_id] [damage]
-            if len(proc) == 5:
+        elif proc[0] == '--出刀':
+            if len(proc) == 2:
                 target = raw_data['sender']['user_id']
-                phase = proc[1]
-                boss_id = proc[2]
-                team_id = proc[3]
-                damage = proc[4]
-                mode = 'actual'
-            elif len(proc) == 6:
+                damage = proc[1]
+            elif len(proc) == 3:
                 target = find_qq(proc[1])
-                phase = proc[2]
-                boss_id = proc[3]
-                team_id = proc[4]
-                damage = proc[5]
-                mode = 'actual'
+                damage = proc[2]
             else:
-                send_group_message(raw_data['group_id'], f"参数错误，正确格式为 {command_list['add_actual']} 伤害")
+                st = "参数数量错误"
+                send_group_message(raw_data['group_id'], st)
                 return
             try:
-                input_data(target, phase, boss_id, team_id, damage, mode)
+                add_boss_damage(target, damage)
+                send_group_message(raw_data['group_id'], '已录入')
+            except DataProcessError as dpe:
+                send_group_message(raw_data['group_id'], dpe.msg)
+            return
+        elif proc[0] == '--尾刀':
+            target = raw_data['sender']['user_id']
+            last(target)
+            try:
+                last(target)
                 send_group_message(raw_data['group_id'], '已录入')
             except DataProcessError as dpe:
                 send_group_message(raw_data['group_id'], dpe.msg)
@@ -168,30 +169,6 @@ def process(raw_data: dict):
                 st = "参数数量错误"
             send_group_message(raw_data['group_id'], st)
             return
-        elif proc[0] == '--addboss':  # --addboss [phase] [boss_id] [health]
-            if not len(proc) == 3:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -addboss 阶段 boss序号')
-                return
-            phase = proc[1]
-            boss_id = proc[2]
-            health = '1'
-            try:
-                add_boss(phase, boss_id, health)
-                send_group_message(raw_data['group_id'], '已登记阶段%s的%s号boss' % (phase, boss_id))
-            except DataProcessError as dpe:
-                send_group_message(raw_data['group_id'], dpe.msg)
-            return
-        elif proc[0] == '--removeboss':  # --removeboss [phase] [boss_id]
-            if not len(proc) == 3:
-                send_group_message(raw_data['group_id'], '参数错误，正确格式为 -removeboss 阶段 boss序号')
-            phase = proc[1]
-            boss_id = proc[2]
-            try:
-                remove_boss(phase, boss_id)
-                send_group_message(raw_data['group_id'], '已删除阶段%s的%s号boss' % (phase, boss_id))
-            except DataProcessError as dpe:
-                send_group_message(raw_data['group_id'], dpe.msg)
-            return
         elif check_mod(raw_data['sender']['user_id']):
             if proc[0] == '--setday':
                 if not raw_data['sender']['user_id'] in modList:
@@ -201,21 +178,6 @@ def process(raw_data: dict):
                     send_group_message(raw_data['group_id'], '日期已变更')
                 else:
                     send_group_message(raw_data['group_id'], '参数数量错误，应为--setday 日期')
-            elif proc[0] == '--setphase':
-                if not raw_data['sender']['user_id'] in modList:
-                    return
-                if len(proc) == 3:
-                    if proc[1] == 1:
-                        t = '一会'
-                    elif proc[1] == 3:
-                        t = '三会'
-                    else:
-                        send_group_message(raw_data['group_id'], '参数数量错误，应为--phase 公会 周目')
-                        return
-                    set_phase(t, proc[1])
-                    send_group_message(raw_data['group_id'], '日期已变更')
-                else:
-                    send_group_message(raw_data['group_id'], '参数数量错误，应为--phase 公会 周目')
             elif proc[0] == '--setmod':
                 if raw_data['sender']['user_id'] in modList:
                     set_mod(proc[1])

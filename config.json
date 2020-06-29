@@ -4,5 +4,5 @@
   "database_port": 1024,
   "user": "testUser1",
   "password": "123",
-  "develop": true
+  "develop": false
 }
