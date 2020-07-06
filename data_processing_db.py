@@ -60,10 +60,17 @@ def register_user(qq: int = 10000, user_name: str = 'a', user_id: str = '1', gui
     c = "SELECT * FROM pcr.member_list WHERE qq=%d" % qq
     cursor.execute(c)
     if len(cursor.fetchall()) == 0:
+
         command = "INSERT INTO pcr.member_list" \
                   "(qq, user_name, user_id, roll, guild) VALUES " \
                   "(%d, %s, %d, 'member', %s)" % (qq, f"'{user_name}'", user_id, f"'{guild}'")
         cursor.execute(command)
+
+        command = "INSERT INTO pcr.actual_damage" \
+                  "(qq) VALUES " \
+                  "(%d)" % qq
+        cursor.execute(command)
+
         connection.commit()
         print("user created")
         connection.commit()
@@ -150,6 +157,8 @@ def add_boss_damage(qq: int, damage: str): # needs modification
         temp_dict = json.loads(t[0][4])
         res['last'] = temp_dict['last']
         command = f"UPDATE pcr.actual_damage SET last='' WHERE qq={qq}"
+        cursor.execute(command)
+        connection.commit()
 
     res = json.dumps(res)
 
