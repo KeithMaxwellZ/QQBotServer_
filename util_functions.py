@@ -65,7 +65,7 @@ def generate_char_list_file():
     with open('character_list.json', 'w') as f:
         SSR = ["伊利亚", "镜华", "真琴", "真步", "静流", "杏奈", "初音", "咲恋", "伊绪", "吉塔", "莫妮卡", "妮侬", "望", "秋乃", "璃乃"]
         SR = ["香织", "美美", "绫音", "铃", "惠理子", "忍", "真阳", "栞",
-              "千歌", "空花", "珠希", "美冬", "深月", "茜里", "宫子", "雪", "玲奈"]
+              "千歌", "空花", "珠希", "美冬", "深月", "茜里", "宫子", "雪", "玲奈", "美里"]
         R = ["日和莉", "优衣", "怜", "未奏希", "胡桃", "依里", "铃莓",
              "由加莉", "碧", "美咲", "莉玛", "佩可莉姆", "可可萝", "凯露"]
         res = {"SSR": SSR, "SR": SR, "R": R}
@@ -81,16 +81,10 @@ def lottery(mode: str) -> str:
         return draw_one(char_list)
     elif mode == "ten":
         res = "以下为稻叶二号机预测的十连结果\n"
-        hasSR = False
         for i in range(0, 9):
             r = draw_one(char_list)
             res += r[0]
-            if r[1] == 2:
-                hasSR = True
-        if not hasSR:
-            res += f'★★☆-{char_list["SR"][random.randrange(0, len(char_list["SR"]))]}\n'
-        else:
-            res += draw_one(char_list)[0]
+        res += f'★★☆-{char_list["SR"][random.randrange(0, len(char_list["SR"]))]}\n'
         return res
 
 
