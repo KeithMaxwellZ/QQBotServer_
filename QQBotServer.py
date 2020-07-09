@@ -5,7 +5,7 @@ from pymysql.err import InternalError
 
 from data_processing_db import *
 from data_fetching_db import *
-from util_functions import send_group_message, send_private_message, find_qq, check_mod, lottery
+from util_functions import send_group_message, send_private_message, find_qq, check_mod, lottery, divination
 
 svr = Flask(__name__)
 svr.config['JSON_AS_ASCII'] = False
@@ -28,7 +28,8 @@ def process(raw_data: dict):
                     'display': '--显示模拟战伤害',
                     'add_actual': '--出刀 伤害',
                     'last': '--尾刀',
-                    'add_trial': '--添加模拟战数据 周目 boss序号 第几刀(队伍序号) 伤害'}
+                    'add_trial': '--添加模拟战数据 周目 boss序号 第几刀(队伍序号) 伤害',
+                    'divination': '--抽签'}
 
     command = raw_data['raw_message']
     proc = str.split(command, ' ')
@@ -43,6 +44,7 @@ def process(raw_data: dict):
             s = "现有命令：\n" \
                 f"{command_list['lottery_ten']}  (十连，概率为白金池概率，有保底)\n" \
                 f"{command_list['lottery_one']}  （单抽，也是白金池概率）\n" \
+                f"{command_list['divination']}  （抽签）\n" \
                 f"{command_list['add_trial']}  \n" \
                 "（输入伤害 举例：--添加模拟战数据 2 1 1 1000 则会为二周目一王输入伤害为1000的第一刀模拟）\n" \
                 f"{command_list['add_actual']}  \n" \
@@ -65,6 +67,9 @@ def process(raw_data: dict):
             return
         elif proc[0] == '--单抽':
             send_group_message(raw_data['group_id'], lottery('single'))
+            return
+        elif proc[0] == '--抽签':
+            send_group_message(raw_data['group_id'], divination(raw_data['sender']['user_id']))
             return
         if temp_d['develop']:
             send_group_message(raw_data['group_id'], '功能维护中')
